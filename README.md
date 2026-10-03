@@ -40,12 +40,14 @@ The main objectives of this project are:
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ▶️ How to Run the Project
 1. Install required dependencies:
+   
    npm install
 
-2. Run the application server:
+3. Run the application server:
+   
    npm start
 
-3. Open browser at `http://localhost:5001 to view dashboard
+5. Open browser at `http://localhost:5001 to view dashboard
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 📁 Project Structure
