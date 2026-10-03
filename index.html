@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Procurement & AI Visual Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+    <style>
+        :root {
+            --card-bg: rgba(10, 25, 47, 0.7);
+            --card-border: rgba(56, 189, 248, 0.25);
+            --input-bg: rgba(15, 32, 67, 0.8);
+            --accent-cyan: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-green: #34d399;
+            --accent-orange: #fbbf24;
+            --accent-red: #f87171;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body {
+            background-color: #020817;
+            color: var(--text-main);
+            padding: 24px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fixed Fullscreen Background Canvas for High-Tech Wave & Stars */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ensure Content Layers Stay Above the Dynamic Background */
+        header, .stats-grid, .container, .section-divider, .analytics-grid {
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 16px; }
+
+        .ai-logo {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+            animation: floatLogo 4s ease-in-out infinite;
+        }
+
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .company-info h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .company-info p { font-size: 13px; color: var(--text-sub); margin-top: 2px; }
+
+        .db-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--accent-green);
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.15);
+        }
+
+        .db-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        /* 1. TOP SECTION: KPI STAT CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 18px;
+            border: 1px solid var(--card-border);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card:hover {
+            border-color: rgba(56, 189, 248, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(56, 189, 248, 0.25);
+        }
+
+        .stat-info h3 {
+            font-size: 12px;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+        }
+
+        .stat-info .value { font-size: 30px; font-weight: 800; margin-top: 6px; }
+        .stat-icon { font-size: 32px; opacity: 0.9; }
+
+        /* 2. MIDDLE SECTION: FORM & OPERATIONS TABLE */
+        .container {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 12px 35px rgba(168, 85, 247, 0.2);
+        }
+
+        .card h2 {
+            font-size: 17px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(168, 85, 247, 0.55);
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: var(--input-bg);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .search-box { flex: 1; }
+        .search-box input {
+            width: 100%;
+            padding: 9px 14px;
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .filter-bar select {
+            padding: 9px 14px;
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        th {
+            background: rgba(10, 20, 40, 0.9);
+            color: var(--text-sub);
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        td { padding: 12px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-Pending { background: rgba(251, 191, 36, 0.15); color: var(--accent-orange); border: 1px solid rgba(251, 191, 36, 0.3); }
+        .badge-Partial { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-Fulfilled { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-supply { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+        .btn-supply:hover { background: rgba(52, 211, 153, 0.3); }
+        .btn-delete { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); border: 1px solid rgba(248, 113, 113, 0.3); }
+        .btn-delete:hover { background: rgba(248, 113, 113, 0.3); }
+
+        /* 3. BOTTOM SECTION: ANALYTICS SECTION TITLE & CHARTS GRID */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-top: 10px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+        }
+
+        .tech-tag {
+            font-size: 11px;
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .analytics-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            padding: 22px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-card:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
+        }
+
+        .chart-card h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 230px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Animated Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Header Section -->
+    <header>
+        <div class="header-brand">
+            <div class="ai-logo">⚡</div>
+            <div class="company-info">
+                <h1>Apex Neural Intelligence Analytics</h1>
+                <p>Real-Time Operations & Data Flow Control Engine</p>
+            </div>
+        </div>
+        <div class="db-status">
+            <div class="db-dot"></div>
+            <span>MySQL Live Sync Active</span>
+        </div>
+    </header>
+
+    <!-- 1. TOP SECTION: KPI STAT CARDS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Total Orders</h3>
+                <div class="value" id="statTotalOrders">0</div>
+            </div>
+            <div class="stat-icon">📦</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Pending Orders</h3>
+                <div class="value" id="statPendingOrders" style="color: var(--accent-orange);">0</div>
+            </div>
+            <div class="stat-icon">⏳</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Fulfilled Orders</h3>
+                <div class="value" id="statFulfilledOrders" style="color: var(--accent-green);">0</div>
+            </div>
+            <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info">
+                <h3>Total Ordered Units</h3>
+                <div class="value" id="statTotalUnits" style="color: var(--accent-cyan);">0</div>
+            </div>
+            <div class="stat-icon">📈</div>
+        </div>
+    </div>
+
+    <!-- 2. MIDDLE SECTION: DATA INPUT FORM WITH LISTS & LIVE TABLE TRACKER -->
+    <div class="container">
+        <!-- New Order Form -->
+        <div class="card">
+            <h2>📝 New Order Entry</h2>
+            <form id="orderForm">
+                <!-- SUPPLIER NAME LIST -->
+                <div class="form-group">
+                    <label>Supplier Name</label>
+                    <select id="supplierName" required>
+                        <option value="" disabled selected>Select Supplier</option>
+                        <option value="TechData Logistics">TechData Logistics</option>
+                        <option value="Global Tech Solutions">Global Tech Solutions</option>
+                        <option value="Nexus Micro Systems">Nexus Micro Systems</option>
+                        <option value="Apex Cyber Supply">Apex Cyber Supply</option>
+                        <option value="Velocity Hardware Corp">Velocity Hardware Corp</option>
+                    </select>
+                </div>
+
+                <!-- PRODUCT NAME LIST -->
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <select id="productName" required>
+                        <option value="" disabled selected>Select Product</option>
+                        <option value="XPS 15 Laptop">XPS 15 Laptop</option>
+                        <option value="Core i9 Processor">Core i9 Processor</option>
+                        <option value="4K UltraMonitor 27 inch">4K UltraMonitor 27 inch</option>
+                        <option value="NVMe SSD 2TB Drive">NVMe SSD 2TB Drive</option>
+                        <option value="Enterprise Gigabit Router">Enterprise Gigabit Router</option>
+                    </select>
+                </div>
+
+                <!-- CATEGORY LIST -->
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Laptops">Laptops</option>
+                        <option value="Processors">Processors</option>
+                        <option value="Monitors">Monitors</option>
+                        <option value="Storage & SSDs">Storage & SSDs</option>
+                        <option value="Networking">Networking</option>
+                    </select>
+                </div>
+
+                <!-- BRAND LIST -->
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select id="brand" required>
+                        <option value="" disabled selected>Select Brand</option>
+                        <option value="Dell">Dell</option>
+                        <option value="Intel">Intel</option>
+                        <option value="Samsung">Samsung</option>
+                        <option value="Lenovo">Lenovo</option>
+                        <option value="Cisco">Cisco</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Demand Quantity</label>
+                    <input type="number" id="demandQty" required min="1" placeholder="100">
+                </div>
+                <div class="form-group">
+                    <label>Ordered Quantity</label>
+                    <input type="number" id="orderedQty" required min="1" placeholder="100">
+                </div>
+                <button type="submit" class="btn-submit">Submit Order & Refresh Engine</button>
+            </form>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="card">
+            <h2>📋 Live Operations Tracker</h2>
+            <div class="filter-bar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" onkeyup="filterTableBySearch()" placeholder="Search product, supplier or brand...">
+                </div>
+                <div>
+                    <select id="filterCategory" onchange="fetchOrders()">
+                        <option value="All">All Categories</option>
+                        <option value="Laptops">Laptops</option>
+                        <option value="Processors">Processors</option>
+                        <option value="Monitors">Monitors</option>
+                        <option value="Storage & SSDs">Storage & SSDs</option>
+                        <option value="Networking">Networking</option>
+                    </select>
+                </div>
+                <div>
+                    <select id="filterStatus" onchange="fetchOrders()">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Partial">Partial</option>
+                        <option value="Fulfilled">Fulfilled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Supplier</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Brand</th>
+                            <th>Demand</th>
+                            <th>Ordered</th>
+                            <th>Supplied</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. BOTTOM SECTION: VISUAL ANALYTICS & CHARTS -->
+    <div class="section-divider">
+        <div class="section-title">
+            <span>🤖</span> Dynamic AI Analytics & Visualizations
+        </div>
+        <div class="tech-tag">Live Dynamic Render</div>
+    </div>
+
+    <!-- 4 Charts Grid -->
+    <div class="analytics-grid">
+        <div class="chart-card">
+            <h2><span>📊</span> Category Volume Distribution</h2>
+            <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <h2><span>🔄</span> Order Status Breakdown</h2>
+            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <h2><span>🎯</span> Fulfillment Progress (Supplied vs Remaining)</h2>
+            <div class="chart-container"><canvas id="fulfillmentChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <h2><span>🏷</span> Top Brand Demand Analysis</h2>
+            <div class="chart-container"><canvas id="brandChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Canvas Animation & Dashboard Engine Script -->
+    <script>
+        // --- 1. Dynamic Canvas Background Script ---
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Stars setup
+        const stars = Array.from({ length: 180 }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 1.6,
+            alpha: Math.random(),
+            speed: Math.random() * 0.015 + 0.005
+        }));
+
+        let step = 0;
+
+        function drawBackground() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Deep Space Gradient Background
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+            bgGrad.addColorStop(0, '#020617');
+            bgGrad.addColorStop(0.4, '#081738');
+            bgGrad.addColorStop(0.8, '#0b2046');
+            bgGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Render Twinkling Stars
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+                ctx.fillStyle = `rgba(224, 242, 254, ${Math.abs(star.alpha)})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Render Glowing Vertical Wave Bars & Particle Nodes
+            step += 0.018;
+            const barSpacing = 14;
+            const totalBars = Math.floor(width / barSpacing);
+
+            for (let i = 0; i < totalBars; i++) {
+                const x = i * barSpacing;
+                
+                // Continuous Sine Wave Calculation
+                const waveY = Math.sin(i * 0.06 + step) * 55 + height * 0.68;
+                const barHeight = Math.abs(Math.sin(i * 0.12 + step) * 110) + 25;
+
+                // Glowing Bar Lines
+                ctx.strokeStyle = `rgba(56, 189, 248, ${0.12 + Math.sin(step + i) * 0.08})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x, waveY);
+                ctx.lineTo(x, waveY - barHeight);
+                ctx.stroke();
+
+                // Glowing Top Node Dot
+                ctx.fillStyle = '#38bdf8';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#00f0ff';
+                ctx.beginPath();
+                ctx.arc(x, waveY - barHeight, 2.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset Shadow Glow
+            }
+
+            requestAnimationFrame(drawBackground);
+        }
+
+        drawBackground();
+
+        // --- 2. Dashboard Logic & Chart Engine ---
+        let globalOrders = [];
+        let categoryChartInstance = null;
+        let statusChartInstance = null;
+        let fulfillmentChartInstance = null;
+        let brandChartInstance = null;
+
+        document.addEventListener('DOMContentLoaded', fetchOrders);
+
+        async function fetchOrders() {
+            const cat = document.getElementById('filterCategory').value;
+            const status = document.getElementById('filterStatus').value;
+
+            try {
+                const response = await fetch(`/api/orders?category=${cat}&status=${status}`);
+                const result = await response.json();
+                if (result.success) {
+                    globalOrders = result.data || [];
+                    renderTable(globalOrders);
+                    updateStats(globalOrders);
+                    renderCharts(globalOrders);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        function updateStats(orders) {
+            document.getElementById('statTotalOrders').textContent = orders.length;
+            document.getElementById('statPendingOrders').textContent = orders.filter(o => o.order_status === 'Pending').length;
+            document.getElementById('statFulfilledOrders').textContent = orders.filter(o => o.order_status === 'Fulfilled').length;
+            
+            const totalUnits = orders.reduce((sum, o) => sum + (parseInt(o.ordered_qty) || 0), 0);
+            document.getElementById('statTotalUnits').textContent = totalUnits;
+        }
+
+        function filterTableBySearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = globalOrders.filter(o => 
+                (o.supplier_name && o.supplier_name.toLowerCase().includes(query)) || 
+                (o.product_name && o.product_name.toLowerCase().includes(query)) ||
+                (o.brand && o.brand.toLowerCase().includes(query))
+            );
+            renderTable(filtered);
+            renderCharts(filtered);
+        }
+
+        function renderTable(orders) {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            orders.forEach(order => {
+                const remaining = order.remaining_qty !== null && order.remaining_qty !== undefined 
+                    ? order.remaining_qty 
+                    : (order.ordered_qty - order.supplied_qty);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>#${order.order_id}</b></td>
+                    <td><b>${order.supplier_name || ''}</b></td>
+                    <td>${order.product_name || ''}</td>
+                    <td>${order.category || ''}</td>
+                    <td>${order.brand || ''}</td>
+                    <td>${order.demand_qty || 0}</td>
+                    <td>${order.ordered_qty || 0}</td>
+                    <td>${order.supplied_qty || 0}</td>
+                    <td><b>${remaining}</b></td>
+                    <td><span class="badge badge-${order.order_status}">${order.order_status}</span></td>
+                    <td>
+                        ${remaining > 0 ? `<button class="action-btn btn-supply" onclick="addDelivery(${order.order_id})">+ Receive</button>` : ''}
+                        <button class="action-btn btn-delete" onclick="deleteOrder(${order.order_id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCharts(orders) {
+            if (typeof Chart === 'undefined') return;
+
+            // Chart 1: Category Volume Distribution
+            const categories = {};
+            orders.forEach(o => {
+                const c = o.category || 'Other';
+                categories[c] = (categories[c] || 0) + (parseInt(o.ordered_qty) || 0);
+            });
+
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(document.getElementById('categoryChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{ label: 'Ordered Units', data: Object.values(categories), backgroundColor: '#38bdf8', borderRadius: 8 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+
+            // Chart 2: Order Status Breakdown
+            const pending = orders.filter(o => o.order_status === 'Pending').length;
+            const partial = orders.filter(o => o.order_status === 'Partial').length;
+            const fulfilled = orders.filter(o => o.order_status === 'Fulfilled').length;
+
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Partial', 'Fulfilled'],
+                    datasets: [{ data: [pending, partial, fulfilled], backgroundColor: ['#fbbf24', '#38bdf8', '#34d399'], borderWidth: 0 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 15 } } } 
+                }
+            });
+
+            // Chart 3: Fulfillment Progress (Supplied vs Remaining)
+            const totalSupplied = orders.reduce((sum, o) => sum + (parseInt(o.supplied_qty) || 0), 0);
+            const totalRemaining = orders.reduce((sum, o) => {
+                const rem = o.remaining_qty !== null && o.remaining_qty !== undefined ? o.remaining_qty : (o.ordered_qty - o.supplied_qty);
+                return sum + (parseInt(rem) || 0);
+            }, 0);
+
+            if (fulfillmentChartInstance) fulfillmentChartInstance.destroy();
+            fulfillmentChartInstance = new Chart(document.getElementById('fulfillmentChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Supplied Units', 'Remaining Units'],
+                    datasets: [{ data: [totalSupplied, totalRemaining], backgroundColor: ['#34d399', '#f87171'], borderWidth: 0 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 15 } } } 
+                }
+            });
+
+            // Chart 4: Top Brand Demand Analysis
+            const brands = {};
+            orders.forEach(o => {
+                const b = o.brand || 'Unbranded';
+                brands[b] = (brands[b] || 0) + (parseInt(o.demand_qty) || 0);
+            });
+
+            if (brandChartInstance) brandChartInstance.destroy();
+            brandChartInstance = new Chart(document.getElementById('brandChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(brands),
+                    datasets: [{ label: 'Demand Qty', data: Object.values(brands), backgroundColor: '#a855f7', borderRadius: 8 }]
+                },
+                options: { 
+                    indexAxis: 'y',
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                supplier_name: document.getElementById('supplierName').value,
+                product_name: document.getElementById('productName').value,
+                category: document.getElementById('category').value,
+                brand: document.getElementById('brand').value,
+                demand_qty: parseInt(document.getElementById('demandQty').value),
+                ordered_qty: parseInt(document.getElementById('orderedQty').value)
+            };
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('orderForm').reset();
+                    fetchOrders();
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert('Failed to save order.');
+            }
+        });
+
+        async function addDelivery(id) {
+            const qty = prompt('Enter quantity received:');
+            if (!qty || isNaN(qty) || parseInt(qty) <= 0) return;
+
+            try {
+                const res = await fetch(`/api/orders/${id}/supply`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ add_supplied: parseInt(qty) })
+                });
+                const result = await res.json();
+                if (result.success) fetchOrders();
+                else alert(result.message);
+            } catch (err) {
+                alert('Failed to update supply.');
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('Are you sure you want to delete this order?')) return;
+            try {
+                const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) fetchOrders();
+                else alert(result.message);
+            } catch (err) {
+                alert('Failed to delete order.');
+            }
+        }
+    </script>
+</body>
+</html>
