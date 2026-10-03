@@ -2,11 +2,13 @@
 # ⚡ Apex Procurement & Inventory Analytics Engine
 
 📌 Introduction
+
 The Apex Procurement & Inventory Analytics Engine is an interactive full-stack web project developed under the Artificial Intelligence and Data Science (AIDS) domain.
 It helps track, analyze, and manage procurement orders, supplier performance, and fulfillment status in real-time using modern database integration and dynamic visual dashboards.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 🎯 Objective
+
 The main objectives of this project are:
 - Automate order tracking and inventory fulfillment logic using database triggers
 - Analyze supplier performance, demand quantities, and category-wise distributions
