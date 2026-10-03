@@ -60,6 +60,7 @@ README.md → Project documentation
 - Interactive futuristic procurement dashboard with animated canvas background
 - Real-time MySQL sync with visual charts and order tracking operations
 <img width="1887" height="885" alt="image" src="https://github.com/user-attachments/assets/6501af91-15af-4f62-a8b8-dbff0162bec7" />
+<img width="1877" height="767" alt="image" src="https://github.com/user-attachments/assets/c73e7ac7-d93e-4856-867c-409a519d945e" />
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
